@@ -41,8 +41,6 @@ public class TetrisMovement : MonoBehaviour
         }
     }
 
-   
-
     void MoveHorizontal(int direction)
     {
         transform.position += new Vector3(direction, 0, 0);
@@ -58,9 +56,59 @@ public class TetrisMovement : MonoBehaviour
         if (!IsValidGridPos())
         {
             transform.position += new Vector3(0, 1, 0);
+            AddToGrid();
+            CheckTheLine();
             this.enabled = false;
-           
-            
+            FindObjectOfType<SpawnArea>().NewTetromino();
+        }
+    }
+
+    void CheckTheLine()
+    {
+        for (int i = Height - 1; i >= 0; i--)
+        {
+            if (HasLine(i))
+            {
+                DeleteLine(i);
+                RowDown(i);
+            }
+        }
+    }
+
+    bool HasLine(int i)
+    {
+        for (int j = 0; j < Width; j++)
+        {
+            if (grid[j, i] == null)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void DeleteLine(int i)
+    {
+        for (int j = 0; j < Width; j++)
+        {
+            Destroy(grid[j, i].gameObject);
+            grid[j, i] = null;
+        }
+    }
+
+    void RowDown(int i)
+    {
+        for (int y = i; y < Height; y++)
+        {
+            for (int j = 0; j < Width; j++)
+            {
+                if (grid[j, y] != null)
+                {
+                    grid[j, y - 1] = grid[j, y];
+                    grid[j, y] = null;
+                    grid[j, y - 1].transform.position += new Vector3(0, -1, 0);
+                }
+            }
         }
     }
 
@@ -70,6 +118,19 @@ public class TetrisMovement : MonoBehaviour
         if (!IsValidGridPos())
         {
             transform.RotateAround(transform.TransformPoint(RotationBlock), Vector3.forward, -90);
+        }
+    }
+
+    void AddToGrid()
+    {
+        foreach (Transform child in transform)
+        {
+            Vector3 pos = child.transform.position;
+            int roundedX = Mathf.RoundToInt(pos.x);
+            int roundedY = Mathf.RoundToInt(pos.y);
+
+            // Add the block to the grid
+            grid[roundedX, roundedY] = child;
         }
     }
 
@@ -88,7 +149,10 @@ public class TetrisMovement : MonoBehaviour
             }
 
             // Check if the position is already occupied by another block
-           
+            if (grid[roundedX, roundedY] != null)
+            {
+                return false;
+            }
         }
         return true;
     }
